@@ -8,8 +8,8 @@ import { StatsDashboard } from './StatsDashboard';
 
 export const VisualizerLayout: React.FC = () => {
     return (
-        <div className="flex flex-col h-screen bg-gray-50 text-gray-900">
-            <header className="px-6 py-4 bg-white border-b border-gray-200 flex items-center justify-between shadow-sm z-10">
+        <div className="flex flex-col h-screen bg-gradient-to-br from-indigo-50 to-blue-50 text-gray-900 font-sans">
+            <header className="px-8 py-5 flex items-center justify-between z-10">
                 <div className="flex items-center gap-2">
                     <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">
                         A
@@ -25,7 +25,7 @@ export const VisualizerLayout: React.FC = () => {
 
             <main className="flex-1 relative p-4 overflow-hidden flex gap-4">
                 <div className="flex-[2] flex flex-col gap-4 min-w-0">
-                    <div className="flex-1 min-h-0 bg-white rounded-lg shadow-sm">
+                    <div className="flex-1 min-h-0 bg-white/60 backdrop-blur-sm rounded-[32px] shadow-sm border border-white/50 overflow-hidden">
                         <CanvasStage />
                     </div>
                     <div className="shrink-0">
@@ -40,7 +40,7 @@ export const VisualizerLayout: React.FC = () => {
                         </div>
                     </div>
                 </div>
-                <div className="flex-1 min-w-0 bg-white rounded-lg shadow-sm">
+                <div className="flex-1 min-w-0 bg-white/80 backdrop-blur-xl rounded-[32px] shadow-sm border border-white/50 overflow-hidden">
                     <CodeEditor />
                 </div>
             </main>

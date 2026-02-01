@@ -27,10 +27,15 @@
 - **Complexity Analysis**: See the theoretical Big-O complexity for the current algorithm.
 - **Chaos Mode Inputs**: Test algorithms against "Worst Case" (Reverse Sorted), "Best Case" (Nearly Sorted), and edge cases (Few Unique).
 
+### 🌐 Graph Mode
+- **Visualize BFS/DFS**: Watch nodes change colors as they are visited and processed.
+- **Custom Render Engine**: Switches seamlessly between 1D Bars (Sorting) and 2D Nodes (Graph).
+
 ### 🛠️ Customization
 - **Array Size Slider**: Scale from 10 to 100 elements seamlessly.
 - **Input Generators**: Random, Sorted, Reverse, Nearly Sorted, Few Unique.
 - **Variable Speed**: Control playback from step-by-step debug speed to instant execution.
+- **One UI 8 Design**: Experience a premium, glassmorphic interface with fluid controls.
 
 ## 🚀 Getting Started
 

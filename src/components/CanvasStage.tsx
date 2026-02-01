@@ -16,7 +16,9 @@ export const CanvasStage: React.FC = () => {
         isSorted,
         isPlaying,
         playbackSpeed,
-        nextStep
+        nextStep,
+        mode,
+        graphData
     } = useVisualizerStore();
 
     // Initialize Renderer
@@ -57,8 +59,10 @@ export const CanvasStage: React.FC = () => {
                 steps,
                 isSorted,
                 isPlaying,
-                playbackSpeed
-            });
+                playbackSpeed,
+                mode,
+                graphData
+            } as any);
         }
     }, [array, algorithm, currentStep, steps, isSorted, isPlaying, playbackSpeed]); // Re-draw trigger
 

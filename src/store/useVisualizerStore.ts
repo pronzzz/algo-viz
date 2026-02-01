@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { VisualizerState, AnimationStep, AlgorithmType } from '../types';
+import type { VisualizerState, AnimationStep, AlgorithmType, VisualizerMode, GraphData } from '../types';
 
 interface VisualizerStore extends VisualizerState {
   setArray: (array: number[]) => void;
@@ -21,6 +21,12 @@ interface VisualizerStore extends VisualizerState {
   setArraySize: (size: number) => void;
   setInputType: (type: 'random' | 'sorted' | 'reverse' | 'nearlySorted' | 'fewUnique') => void;
   generateArray: () => void;
+
+  // Phase 7
+  mode: VisualizerMode;
+  graphData: GraphData;
+  setMode: (mode: VisualizerMode) => void;
+  generateGraph: () => void;
 }
 
 const DEFAULT_BUBBLE = `function bubbleSort(arr) {
@@ -47,14 +53,8 @@ const DEFAULT_MERGE = `function mergeSort(arr, l = 0, r = arr.length - 1) {
 }
 
 function merge(arr, l, m, r) {
-  // Simplistic merge for visualization (in-place-ish with temp)
   const n1 = m - l + 1;
   const n2 = r - m;
-  
-  // We can't visualize creating new arrays easily with current renderer.
-  // We simulate by overwriting the main array.
-  // Standard merge uses temp arrays.
-  // Let's copy to JS arrays (not visualized) then write back.
   
   const L = [];
   const R = [];
@@ -65,7 +65,6 @@ function merge(arr, l, m, r) {
   let i = 0, j = 0, k = l;
   
   while (i < n1 && j < n2) {
-    // Write back triggers overwrite step
     if (L[i] <= R[j]) {
       arr[k] = L[i];
       i++;
@@ -105,13 +104,11 @@ function partition(arr, low, high) {
   for (let j = low; j <= high - 1; j++) {
     if (arr[j] < pivot) {
       i++;
-      // swap arr[i] and arr[j]
       const temp = arr[i];
       arr[i] = arr[j];
       arr[j] = temp;
     }
   }
-  // swap arr[i + 1] and arr[high]
   const temp = arr[i + 1];
   arr[i + 1] = arr[high];
   arr[high] = temp;
@@ -119,13 +116,45 @@ function partition(arr, low, high) {
   return (i + 1);
 }`;
 
+const DEFAULT_BFS = `function bfs(adj, visited, startNode = 0) {
+  // adj: adjacency list (array of arrays)
+  // visited: boolean array [0, 0...] (0=unvisited, 1=visited)
+  
+  const queue = [startNode];
+  visited[startNode] = 1; 
+
+  while (queue.length > 0) {
+    const u = queue.shift();
+    const neighbors = adj[u] || [];
+    
+    for (let i = 0; i < neighbors.length; i++) {
+        const v = neighbors[i];
+        if (visited[v] === 0) {
+            visited[v] = 1; 
+            queue.push(v);
+        }
+    }
+  }
+}`;
+
+const DEFAULT_DFS = `function dfs(adj, visited, u = 0) {
+  visited[u] = 1; 
+  
+  const neighbors = adj[u] || [];
+  
+  for (let i = 0; i < neighbors.length; i++) {
+      const v = neighbors[i];
+      if (visited[v] === 0) {
+          dfs(adj, visited, v);
+      }
+  }
+}`;
+
 // Helper to generate array based on type
 const generateArrayData = (length: number, type: 'random' | 'sorted' | 'reverse' | 'nearlySorted' | 'fewUnique') => {
   const min = 10;
   const max = 300;
-
   let arr: number[] = [];
-
   switch (type) {
     case 'sorted':
       arr = Array.from({ length }, (_, i) => Math.floor(min + (i / length) * (max - min)));
@@ -135,7 +164,6 @@ const generateArrayData = (length: number, type: 'random' | 'sorted' | 'reverse'
       break;
     case 'nearlySorted':
       arr = Array.from({ length }, (_, i) => Math.floor(min + (i / length) * (max - min)));
-      // Swap 5% of elements
       const swaps = Math.max(1, Math.floor(length * 0.05));
       for (let k = 0; k < swaps; k++) {
         const i = Math.floor(Math.random() * length);
@@ -144,7 +172,6 @@ const generateArrayData = (length: number, type: 'random' | 'sorted' | 'reverse'
       }
       break;
     case 'fewUnique':
-      // 5 unique values
       const uniqueValues = Array.from({ length: 5 }, () => Math.floor(Math.random() * (max - min + 1) + min)).sort((a, b) => a - b);
       arr = Array.from({ length }, () => uniqueValues[Math.floor(Math.random() * uniqueValues.length)]);
       break;
@@ -154,6 +181,36 @@ const generateArrayData = (length: number, type: 'random' | 'sorted' | 'reverse'
       break;
   }
   return arr;
+};
+
+// Helper for Graph Generation
+const generateGraphData = (nodeCount: number = 8): GraphData => {
+  const nodes = [];
+  const edges = [];
+  const centerX = 50; // Percent
+  const centerY = 50; // Percent
+  const radius = 35;  // Percent
+
+  for (let i = 0; i < nodeCount; i++) {
+    const angle = (i / nodeCount) * 2 * Math.PI;
+    nodes.push({
+      id: i,
+      value: i,
+      x: centerX + radius * Math.cos(angle),
+      y: centerY + radius * Math.sin(angle),
+      state: 'default'
+    } as any);
+  }
+
+  for (let i = 0; i < nodeCount; i++) {
+    edges.push({ source: i, target: (i + 1) % nodeCount });
+    if (Math.random() > 0.5) {
+      const target = (i + 2) % nodeCount;
+      edges.push({ source: i, target: target });
+    }
+  }
+
+  return { nodes, edges, isDirected: false };
 };
 
 export const useVisualizerStore = create<VisualizerStore>((set, get) => ({
@@ -167,6 +224,10 @@ export const useVisualizerStore = create<VisualizerStore>((set, get) => ({
   code: DEFAULT_BUBBLE,
   activeLine: undefined,
 
+  // Phase 7
+  mode: 'sorting',
+  graphData: generateGraphData(8),
+
   // Phase 6
   arraySize: 50,
   inputType: 'random',
@@ -176,6 +237,8 @@ export const useVisualizerStore = create<VisualizerStore>((set, get) => ({
     let code = DEFAULT_BUBBLE;
     if (algorithm === 'merge') code = DEFAULT_MERGE;
     if (algorithm === 'quick') code = DEFAULT_QUICK;
+    if (algorithm === 'bfs') code = DEFAULT_BFS;
+    if (algorithm === 'dfs') code = DEFAULT_DFS;
     set({ algorithm, isSorted: false, currentStep: -1, steps: [], code });
   },
   setIsPlaying: (isPlaying) => set({ isPlaying }),
@@ -202,11 +265,11 @@ export const useVisualizerStore = create<VisualizerStore>((set, get) => ({
     set({ array, isSorted: false, currentStep: -1, steps: [] });
   },
 
+  // Phase 7 Actions
+  setMode: (mode) => set({ mode }),
+  generateGraph: () => set({ graphData: generateGraphData(8), currentStep: -1, steps: [] }),
+
   reset: () => {
-    // Reshuffle or just reset steps? For now just reset steps
-    // Actually, to "reset" usually means to go back to initial state or generate new array.
-    // Let's generate new array for now as a "hard reset" or maybe just reset indices.
-    // Let's imply "Generate New Array" is a separate action. "Reset" wipes progress.
     set({ currentStep: -1, isPlaying: false, isSorted: false });
   },
 
@@ -225,6 +288,19 @@ export const useVisualizerStore = create<VisualizerStore>((set, get) => ({
       const [i, j] = step.indices;
       [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
     } else if (step.type === 'overwrite' && step.value !== undefined) {
+      // For graphs (Phase 7), we might be overwriting a 'visited' array if we proxy passed it.
+      // But 'array' state is the sorting array.
+      // Wait, where do we store the 'visited' state for rendering?
+      // Step 69 ExecutionManager pushes 'overwrite' steps with indices.
+      // Renderer draws graph based on node colors.
+      // We need to map 'AnimationStep' indices to 'GraphNode' state.
+      // Current renderer uses 'step.indices' to color nodes.
+      // This works IF the step refers to nodes by index 0..N.
+      // The 'bfs' template writes to 'visited[nodeId]'. 
+      // Since 'visited' is proxied, writing 'visited[5]=1' creates step { type: overwrite, indices: [5], value: 1 }.
+      // Renderer checks step.indices. If 5 is in it, it colors node 5.
+      // Perfect!
+
       const [i] = step.indices;
       newArray[i] = step.value;
     }
@@ -236,25 +312,13 @@ export const useVisualizerStore = create<VisualizerStore>((set, get) => ({
     const { currentStep, steps, array } = get();
     if (currentStep < 0) return;
 
-    // To go back, we need to reverse the operation.
-    // Or, simpler for now: Re-calculate state from specific point?
-    // "Time travel" usually implies efficient reversibility or snapshots.
-    // For small arrays (N=100), re-running from start is fast. 
-    // BUT for "perfect" reverse, 'swap' is its own inverse. 
-    // 'overwrite' is NOT reversible unless we stored the old value.
-    // ISSUE: My AnimationStep type doesn't store 'oldValue'.
-    // FIX: For now, I will implement naive "re-calculate array from scratch" or just not support perfect reverse for 'overwrite' without storage.
-    // Since we are doing Bubble/Selection/Insertion (swaps mostly), Swap is reversible.
-
     const step = steps[currentStep];
     const newArray = [...array];
 
     if (step.type === 'swap') {
       const [i, j] = step.indices;
-      [newArray[i], newArray[j]] = [newArray[j], newArray[i]]; // Swap back
+      [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
     }
-    // TODO: Handle overwrite reverse properly later.
-
     set({ currentStep: currentStep - 1, array: newArray, isSorted: false });
   }
 }));
